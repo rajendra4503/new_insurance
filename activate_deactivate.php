@@ -1,0 +1,310 @@
+<?php
+session_start();
+ini_set("display_errors","0");
+include('include/configinc.php');
+include('include/session.php');
+include('include/functions.php');
+?>
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+    <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+		<title>Customer Activation/De-activation</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto|Varela+Round">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" type="text/css" href="fonts/font.css">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+		<link rel="stylesheet" type="text/css" href="css/planpiper.css">
+		<link rel="shortcut icon" href="images/planpipe_logo.png"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link type="text/css" href="css/bootstrap-timepicker.min.css" />
+    <style type="text/css">
+      .toolbar {
+      float: left;
+      }
+      .dataTables_filter {
+      text-align: center !important;
+      }
+      td a.edit i {
+    color: #FFC107 !important;
+    }
+
+    .glyphicon { 
+    color: #FFC107 !important;
+    top: -6px;
+    }
+
+    td a.delete {
+    color: #F44336;
+    } 
+
+    .btn-success {background-color: #004F35;
+    border-color: #004F35;font-size: 17px;}
+    .btn-success span{
+      font-size: 17px;
+    }
+
+    #example td {
+        padding: 10px;
+        text-align: left;
+        }
+
+    </style>  
+	</head>
+	<body style="overflow:hidden;">
+	<div id="planpiper_wrapper">
+	  	<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 paddingrl0" style="height:100%;">
+	  	 <div class="col-sm-2 paddingrl0"  id="sidebargrid">
+		  	<?php include("sidebar.php");?>
+		 </div>
+		    <div class="col-sm-10 paddingrl0" id="content_wrapper">
+		 	   <?php include_once('top_header.php');?>
+		   	<section>
+
+  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 paddingrl0" style="margin-top:5px;" id="mainplanlistdiv">
+
+
+          <div class="table-responsive">
+              <table id="example" class="table table-bordered" style="width:100%">
+              <thead>
+              <tr class="tableheadings">
+                  <th>#</th>
+                  <th>Company Name</th>
+                  <th>Total Plan</th>
+                  <th>Activation/De-activation</th>
+              </tr>
+            </thead>
+            <tbody>
+                <?php
+                 $i=1;
+                 $query = mysql_query("SELECT * FROM customer_setup_details");
+                 if(mysql_num_rows($query) > 0)
+                  {
+                    while($row = mysql_fetch_assoc($query)) {
+
+                       $CostId = $row['Cust_ID'];
+                ?>
+               <tr>
+                  <td><?php echo $i;?></td>
+                  <td><?php echo $row['Company_Name'];?></td>
+                  <td>
+                    <?php 
+                      $query1 = "SELECT * FROM customer_plan WHERE Cust_ID = '$CostId'";
+                      $result1 = mysql_query($query1);
+                      echo mysql_num_rows($result1);
+                     ?>
+                  </td>
+                  <td>
+                    <a href="customer_activate_deactivate.php?CostId=<?php echo $CostId;?>">
+                    <i class="fa fa-calculator" aria-hidden="true"></i></a>
+                  </td>
+              </tr>
+             <?php 
+                 $i++;
+                } 
+              }  
+             ?>
+            </tbody>
+          </table>
+          </div>
+        </div>
+		 	</section>
+		 </div>
+		</div>		
+	</div><!-- big_wrapper ends -->
+      
+	<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/bootbox.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap-timepicker.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.js"></script>
+
+  <script type="text/javascript">
+
+  $(document).ready(function() {
+
+  $("#addCodeForm").validate({
+        rules:{
+            code:{required: true},
+            code_description:{required: true},
+        },
+        highlight: function (element) {
+            $(element).closest('.form-group').addClass('has-error');
+        },
+        messages:{
+            code:{
+                required: "This field is required"
+            },
+            code_description:{
+                required: "This field is required"
+            },
+        },
+         submitHandler: function(form,e) {
+            e.preventDefault();
+            console.log('Form submitted');
+            $.ajax({
+                type: 'POST',
+                url: 'ajax/icd_code_insert.php',
+                dataType: "html",
+                data: $('form').serialize(),
+                success: function(result) {
+                   var data = $.parseJSON(result);
+                    if(data.status == 'ok'){
+                        $('#addCode').modal('hide');
+                        $('#addCodeForm')[0].reset();
+                        bootbox.alert({
+                         message: "ICD 10 Code Added Successfully.",
+                         size: 'small'
+                        });
+
+                    }else{
+                      bootbox.alert({
+                      message: "Something wrong contact us.",
+                      size: 'small'
+                      });
+                    } 
+                },
+                error : function(error) {
+
+                }
+            });
+            return false;
+        }
+    });
+});
+
+
+ function editFunction(id){
+
+    var codeId = id;
+
+    var dataString = "codeId="+codeId;
+
+    $.ajax({
+        type: 'POST',
+        url: 'ajax/icd_code_edit.php',
+        data    : dataString,
+        datatype: 'json',
+        cache: false,
+        success: function (data) {
+            var data1 = $.parseJSON(data);
+               if(data1.status == 'ok'){
+                  $('#code_edit').val(data1.result.code);
+                  $('#edit_code_desc').val(data1.result.desc);
+                  $('#edit_code_id').val(data1.result.codeId);
+                  $('#editCode').modal('show');  
+                }else{
+                    bootbox.alert({
+                       message: "Something wrong contact us.",
+                       size: 'small'
+                    });
+                } 
+           }
+       });
+  }
+
+   $(document).ready(function() {
+
+   $('#update_code').click(function(e){
+
+      var icd_code      = $('#code_edit').val();
+
+      var icd_desc      = $('#edit_code_desc').val();
+
+      var edit_code_id  = $('#edit_code_id').val();
+
+      var dataString    = "codeId="+edit_code_id+"&icd_code="+icd_code+"&icd_desc="+icd_desc;
+      e.preventDefault();
+      $.ajax({
+          type: 'POST',
+          url: 'ajax/icd_code_update.php',
+          data : dataString,
+          datatype:'json',
+          cache: false,
+          success: function (data) {
+              var data1 = $.parseJSON(data);
+                 if(data1.status == 'ok'){
+                     $('#codeeditform')[0].reset();
+                     $('#editCode').modal('hide');
+                     bootbox.alert({
+                         message: "ICD 10 Code Updated Successfully.",
+                         size: 'small'
+                      });
+                  }else{
+                      bootbox.alert({
+                         message: "Something wrong contact us.",
+                         size: 'small'
+                      });
+                  } 
+             }
+         });
+    });
+
+  });  
+
+$(document).ready(function() {
+
+   $('#example').DataTable({
+        'select': true,
+        'ordering': false,
+        'info': true,
+        'scrollY': 350,
+        'scrollX': true,
+        'scrollCollapse': true,
+        "paging":false,
+        "dom": '<"toolbar">frtip',
+        "searching": true,
+        'language': {
+          searchPlaceholder: "Search By Name or Mobile or Email",
+          search: "_INPUT_"
+        },
+         "initComplete": function () {
+          $('.dataTables_filter input[type="search"]').css({ 'width': '310px','float': 'left' ,'display': 'inline-block' })
+          }
+    });
+});   
+
+	$(document).ready(function() {
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        var total = h - 150;
+        var each = total/12;
+        $('.navbar_li').height(each);
+        $('.navbar_href').height(each/2);
+        $('.navbar_href').css('padding-top', each/4.9);
+        var currentpage = "activate_deactivate";
+        $('#'+currentpage).addClass('active');
+        $('#plapiper_pagename').html("Customer Activation/De-activation");
+
+        var windowheight = h;
+        var available_height = h - 150;
+        $('#mainplanlistdiv').height(available_height);
+        var sidebarflag = 1;
+        $('#topbar-leftmenu').click(function(){
+
+          if(sidebarflag == 1){
+              //$('#sidebargrid').hide(150);
+              $('#sidebargrid').hide("slow","swing");
+              //$('#content_wrapper').addClass("col-sm-12");
+              $('#content_wrapper').removeClass("col-sm-10");
+              sidebarflag = 0;
+          } else {
+              $('#sidebargrid').show("slow","swing");
+              $('#content_wrapper').addClass("col-sm-10");
+              //$('#content_wrapper').removeClass("col-sm-12");
+              sidebarflag = 1;
+          }
+          
+        });
+        var merchant = '<?php echo $logged_merchantid;?>';
+        <?php include('js/notification.js');?>
+	     });
+</script>
+</body>
+</html>
